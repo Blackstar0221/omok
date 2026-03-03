@@ -100,3 +100,6 @@ class OmokGame {
     }
 
     resetGame
+document.addEventListener('DOMContentLoaded', function() {
+    new OmokGame();
+});
