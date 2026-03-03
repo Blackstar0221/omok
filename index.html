@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omok with AI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Omok with AI</h1>
+        
+        <div class="game-info">
+            <div class="info-box">
+                <p>You: <span id="playerStone">●</span> (Black)</p>
+                <p>AI: <span id="aiStone">○</span> (White)</p>
+            </div>
+            
+            <div class="controls">
+                <label for="difficulty">Difficulty:</label>
+                <select id="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+                <button id="newGameBtn">New Game</button>
+            </div>
+            
+            <div class="status">
+                <p id="gameStatus">Your Turn (Black)</p>
+            </div>
+        </div>
+        
+        <div id="board" class="board"></div>
+        
+        <div class="game-result" id="gameResult" style="display: none;">
+            <p id="resultText"></p>
+            <button onclick="location.reload()">Play Again</button>
+        </div>
+    </div>
+
+    <script src="ai.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
