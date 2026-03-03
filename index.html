@@ -179,9 +179,9 @@
             }
 
             getEasyMove(board, empty) {
-                // Easy: Random moves, sometimes blocks
+                // Easy: Only blocks if you're about to win
                 for (let move of empty) {
-                    if (this.checkWin(board, move.r, move.c, 'player')) {
+                    if (this.getLineScore(board, move.r, move.c, 'player') >= 4) {
                         return move;
                     }
                 }
@@ -189,12 +189,27 @@
             }
 
             getMediumMove(board, empty) {
-                // Medium: Looks 1-2 moves ahead
+                // Medium: Blocks threats AND creates own threats
                 let best = null;
                 let bestScore = -999999;
 
                 for (let move of empty) {
-                    let score = this.evaluateMove(board, move.r, move.c);
+                    let score = 0;
+
+                    // Check if can win
+                    if (this.getLineScore(board, move.r, move.c, 'ai') >= 4) {
+                        return move;
+                    }
+
+                    // Check if must block
+                    if (this.getLineScore(board, move.r, move.c, 'player') >= 4) {
+                        score = 5000;
+                    } else {
+                        // Score based on creating lines
+                        score += this.getLineScore(board, move.r, move.c, 'ai') * 100;
+                        score += this.getLineScore(board, move.r, move.c, 'player') * 50;
+                    }
+
                     if (score > bestScore) {
                         bestScore = score;
                         best = move;
@@ -205,99 +220,73 @@
             }
 
             getHardMove(board, empty) {
-                // Hard: Looks 2-3 moves ahead with minimax
-                let best = null;
-                let bestScore = -999999;
+                // Hard: Super intelligent! Looks for winning moves, blocks, creates double threats
+                let winning = [];
+                let blocking = [];
+                let attacking = [];
+                let defensive = [];
 
                 for (let move of empty) {
-                    // Check if AI can win
-                    if (this.checkWin(board, move.r, move.c, 'ai')) {
-                        return move;
+                    const aiScore = this.getLineScore(board, move.r, move.c, 'ai');
+                    const playerScore = this.getLineScore(board, move.r, move.c, 'player');
+
+                    // Category 1: Winning moves (5 or more in a row)
+                    if (aiScore >= 4) {
+                        winning.push({ move, score: aiScore * 1000 });
                     }
-
-                    // Check if need to block player
-                    if (this.checkWin(board, move.r, move.c, 'player')) {
-                        best = move;
-                        bestScore = 5000;
-                        continue;
+                    // Category 2: Blocking moves (player has 3+ in a row)
+                    else if (playerScore >= 3) {
+                        blocking.push({ move, score: playerScore * 500 });
                     }
-
-                    // Look ahead 1 move
-                    const boardCopy = this.copyBoard(board);
-                    boardCopy[move.r][move.c] = 'ai';
-                    
-                    let score = this.evaluateMove(boardCopy, move.r, move.c) * 2;
-
-                    // Check what player could do next
-                    const playerMoves = this.getEmptyMoves(boardCopy);
-                    let playerThreat = 0;
-                    
-                    for (let pMove of playerMoves) {
-                        if (this.checkWin(boardCopy, pMove.r, pMove.c, 'player')) {
-                            playerThreat += 1000;
-                        }
-                        playerThreat += this.countConsecutive(boardCopy, pMove.r, pMove.c, 'player');
+                    // Category 3: Creating threats (building 3+ in a row)
+                    else if (aiScore >= 3) {
+                        attacking.push({ move, score: aiScore * 200 + this.getOpenness(board, move.r, move.c, 'ai') });
                     }
-
-                    score -= playerThreat * 0.5;
-
-                    if (score > bestScore) {
-                        bestScore = score;
-                        best = move;
+                    // Category 4: Everything else
+                    else {
+                        const score = aiScore * 100 + playerScore * 50 + this.proximity(board, move.r, move.c) * 10;
+                        defensive.push({ move, score });
                     }
                 }
 
-                return best || empty[0];
-            }
-
-            evaluateMove(board, r, c) {
-                let score = 0;
-
-                // Winning move
-                if (this.checkWin(board, r, c, 'ai')) return 10000;
-
-                // Blocking move
-                if (this.checkWin(board, r, c, 'player')) score += 5000;
-
-                // Count consecutive pieces
-                score += this.countConsecutive(board, r, c, 'ai') * 100;
-                score += this.countConsecutive(board, r, c, 'player') * 80;
-
-                // Distance from center (prefer center)
-                const distFromCenter = Math.abs(r - 7) + Math.abs(c - 7);
-                score += (14 - distFromCenter) * 5;
-
-                // Proximity to other pieces
-                for (let dr = -3; dr <= 3; dr++) {
-                    for (let dc = -3; dc <= 3; dc++) {
-                        if (dr === 0 && dc === 0) continue;
-                        let nr = r + dr, nc = c + dc;
-                        if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15) {
-                            if (board[nr][nc] === 'ai') score += 20;
-                            if (board[nr][nc] === 'player') score += 15;
-                        }
-                    }
+                // Return best from highest priority category
+                if (winning.length > 0) {
+                    winning.sort((a, b) => b.score - a.score);
+                    return winning[0].move;
+                }
+                if (blocking.length > 0) {
+                    blocking.sort((a, b) => b.score - a.score);
+                    return blocking[0].move;
+                }
+                if (attacking.length > 0) {
+                    attacking.sort((a, b) => b.score - a.score);
+                    return attacking[0].move;
+                }
+                if (defensive.length > 0) {
+                    defensive.sort((a, b) => b.score - a.score);
+                    return defensive[0].move;
                 }
 
-                return score;
+                return empty[0];
             }
 
-            countConsecutive(board, r, c, player) {
+            // Count consecutive stones in all 4 directions
+            getLineScore(board, r, c, player) {
                 const dirs = [[0,1], [1,0], [1,1], [1,-1]];
-                let maxCount = 0;
+                let maxScore = 0;
 
                 for (let [dr, dc] of dirs) {
                     let count = 1;
-                    
-                    // Count in positive direction
+
+                    // Count forward
                     for (let i = 1; i < 5; i++) {
                         let nr = r + dr * i, nc = c + dc * i;
                         if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && board[nr][nc] === player) {
                             count++;
                         } else break;
                     }
-                    
-                    // Count in negative direction
+
+                    // Count backward
                     for (let i = 1; i < 5; i++) {
                         let nr = r - dr * i, nc = c - dc * i;
                         if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && board[nr][nc] === player) {
@@ -305,40 +294,57 @@
                         } else break;
                     }
 
-                    maxCount = Math.max(maxCount, count);
+                    maxScore = Math.max(maxScore, count);
                 }
 
-                return maxCount;
+                return maxScore;
+            }
+
+            // Check if the line can be extended (open on both sides)
+            getOpenness(board, r, c, player) {
+                const dirs = [[0,1], [1,0], [1,1], [1,-1]];
+                let totalOpenness = 0;
+
+                for (let [dr, dc] of dirs) {
+                    let openCount = 0;
+                    
+                    // Check forward direction
+                    if (this.isValid(r + dr, c + dc) && board[r + dr][c + dc] === player) {
+                        openCount++;
+                    }
+                    
+                    // Check backward direction
+                    if (this.isValid(r - dr, c - dc) && board[r - dr][c - dc] === player) {
+                        openCount++;
+                    }
+
+                    totalOpenness += openCount;
+                }
+
+                return totalOpenness;
+            }
+
+            // Proximity to other stones (favor central positions)
+            proximity(board, r, c) {
+                let count = 0;
+                for (let dr = -2; dr <= 2; dr++) {
+                    for (let dc = -2; dc <= 2; dc++) {
+                        if (dr === 0 && dc === 0) continue;
+                        let nr = r + dr, nc = c + dc;
+                        if (this.isValid(nr, nc) && board[nr][nc] !== null) {
+                            count += (3 - Math.max(Math.abs(dr), Math.abs(dc)));
+                        }
+                    }
+                }
+                return count;
+            }
+
+            isValid(r, c) {
+                return r >= 0 && r < 15 && c >= 0 && c < 15;
             }
 
             checkWin(board, r, c, player) {
-                const dirs = [[0,1], [1,0], [1,1], [1,-1]];
-                
-                for (let [dr, dc] of dirs) {
-                    let count = 1;
-                    
-                    for (let i = 1; i < 5; i++) {
-                        let nr = r + dr * i, nc = c + dc * i;
-                        if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && board[nr][nc] === player) {
-                            count++;
-                        } else break;
-                    }
-                    
-                    for (let i = 1; i < 5; i++) {
-                        let nr = r - dr * i, nc = c - dc * i;
-                        if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && board[nr][nc] === player) {
-                            count++;
-                        } else break;
-                    }
-
-                    if (count >= 5) return true;
-                }
-
-                return false;
-            }
-
-            copyBoard(board) {
-                return board.map(row => [...row]);
+                return this.getLineScore(board, r, c, player) >= 5;
             }
         }
 
@@ -402,7 +408,7 @@
 
                 this.turn = 'ai';
                 this.updateStatus('AI is thinking...');
-                setTimeout(() => this.aiMove(), 500);
+                setTimeout(() => this.aiMove(), 600);
             }
 
             aiMove() {
