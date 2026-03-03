@@ -1,0 +1,175 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 100%;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 2.5em;
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.info-box {
+    font-size: 1.1em;
+    color: #555;
+}
+
+.info-box p {
+    margin: 5px 0;
+}
+
+#playerStone {
+    font-size: 1.5em;
+    color: black;
+}
+
+#aiStone {
+    font-size: 1.5em;
+    color: gray;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.controls select {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 2px solid #667eea;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+#newGameBtn {
+    padding: 10px 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+#newGameBtn:hover {
+    background: #764ba2;
+}
+
+.status {
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 0;
+    margin-bottom: 20px;
+    background: #DEB887;
+    padding: 10px;
+    border-radius: 10px;
+    aspect-ratio: 1;
+}
+
+.cell {
+    aspect-ratio: 1;
+    border: 1px solid #8B7355;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+    cursor: pointer;
+    user-select: none;
+    transition: 0.2s;
+}
+
+.cell:hover {
+    background: rgba(102, 126, 234, 0.2);
+}
+
+.cell.player {
+    color: black;
+    font-weight: bold;
+}
+
+.cell.ai {
+    color: gray;
+    font-weight: bold;
+}
+
+.game-result {
+    background: #f0f0f0;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+#resultText {
+    font-size: 1.5em;
+    color: #333;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.game-result button {
+    padding: 10px 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.game-result button:hover {
+    background: #764ba2;
+}
+
+@media (max-width: 600px) {
+    h1 {
+        font-size: 1.8em;
+    }
+    
+    .game-info {
+        flex-direction: column;
+    }
+    
+    .controls {
+        width: 100%;
+        justify-content: center;
+    }
+}
