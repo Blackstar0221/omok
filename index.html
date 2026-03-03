@@ -156,24 +156,45 @@
             }
 
             getBestMove(board) {
+                const empty = this.getEmptyMoves(board);
+                if (empty.length === 0) return null;
+
+                if (this.difficulty === 'easy') {
+                    return this.getEasyMove(board, empty);
+                } else if (this.difficulty === 'medium') {
+                    return this.getMediumMove(board, empty);
+                } else {
+                    return this.getHardMove(board, empty);
+                }
+            }
+
+            getEmptyMoves(board) {
                 const empty = [];
                 for (let r = 0; r < 15; r++) {
                     for (let c = 0; c < 15; c++) {
                         if (board[r][c] === null) empty.push({r, c});
                     }
                 }
+                return empty;
+            }
 
-                if (empty.length === 0) return null;
-
-                if (this.difficulty === 'easy') {
-                    return empty[Math.floor(Math.random() * empty.length)];
+            getEasyMove(board, empty) {
+                // Easy: Random moves, sometimes blocks
+                for (let move of empty) {
+                    if (this.checkWin(board, move.r, move.c, 'player')) {
+                        return move;
+                    }
                 }
+                return empty[Math.floor(Math.random() * empty.length)];
+            }
 
+            getMediumMove(board, empty) {
+                // Medium: Looks 1-2 moves ahead
                 let best = null;
                 let bestScore = -999999;
 
                 for (let move of empty) {
-                    let score = this.evaluate(board, move.r, move.c);
+                    let score = this.evaluateMove(board, move.r, move.c);
                     if (score > bestScore) {
                         bestScore = score;
                         best = move;
@@ -183,50 +204,141 @@
                 return best;
             }
 
-            evaluate(board, r, c) {
+            getHardMove(board, empty) {
+                // Hard: Looks 2-3 moves ahead with minimax
+                let best = null;
+                let bestScore = -999999;
+
+                for (let move of empty) {
+                    // Check if AI can win
+                    if (this.checkWin(board, move.r, move.c, 'ai')) {
+                        return move;
+                    }
+
+                    // Check if need to block player
+                    if (this.checkWin(board, move.r, move.c, 'player')) {
+                        best = move;
+                        bestScore = 5000;
+                        continue;
+                    }
+
+                    // Look ahead 1 move
+                    const boardCopy = this.copyBoard(board);
+                    boardCopy[move.r][move.c] = 'ai';
+                    
+                    let score = this.evaluateMove(boardCopy, move.r, move.c) * 2;
+
+                    // Check what player could do next
+                    const playerMoves = this.getEmptyMoves(boardCopy);
+                    let playerThreat = 0;
+                    
+                    for (let pMove of playerMoves) {
+                        if (this.checkWin(boardCopy, pMove.r, pMove.c, 'player')) {
+                            playerThreat += 1000;
+                        }
+                        playerThreat += this.countConsecutive(boardCopy, pMove.r, pMove.c, 'player');
+                    }
+
+                    score -= playerThreat * 0.5;
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        best = move;
+                    }
+                }
+
+                return best || empty[0];
+            }
+
+            evaluateMove(board, r, c) {
                 let score = 0;
-                
-                if (this.checkLine(board, r, c, 'ai', 5)) return 10000;
-                
-                if (this.checkLine(board, r, c, 'player', 5)) score += 500;
-                
-                for (let dr = -2; dr <= 2; dr++) {
-                    for (let dc = -2; dc <= 2; dc++) {
+
+                // Winning move
+                if (this.checkWin(board, r, c, 'ai')) return 10000;
+
+                // Blocking move
+                if (this.checkWin(board, r, c, 'player')) score += 5000;
+
+                // Count consecutive pieces
+                score += this.countConsecutive(board, r, c, 'ai') * 100;
+                score += this.countConsecutive(board, r, c, 'player') * 80;
+
+                // Distance from center (prefer center)
+                const distFromCenter = Math.abs(r - 7) + Math.abs(c - 7);
+                score += (14 - distFromCenter) * 5;
+
+                // Proximity to other pieces
+                for (let dr = -3; dr <= 3; dr++) {
+                    for (let dc = -3; dc <= 3; dc++) {
                         if (dr === 0 && dc === 0) continue;
                         let nr = r + dr, nc = c + dc;
                         if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15) {
-                            if (board[nr][nc] === 'ai') score += 10;
-                            if (board[nr][nc] === 'player') score += 5;
+                            if (board[nr][nc] === 'ai') score += 20;
+                            if (board[nr][nc] === 'player') score += 15;
                         }
                     }
                 }
 
-                return score + Math.random() * 10;
+                return score;
             }
 
-            checkLine(board, r, c, player, needed) {
+            countConsecutive(board, r, c, player) {
                 const dirs = [[0,1], [1,0], [1,1], [1,-1]];
+                let maxCount = 0;
+
                 for (let [dr, dc] of dirs) {
                     let count = 1;
-                    for (let i = 1; i < needed; i++) {
+                    
+                    // Count in positive direction
+                    for (let i = 1; i < 5; i++) {
                         let nr = r + dr * i, nc = c + dc * i;
                         if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && board[nr][nc] === player) {
                             count++;
                         } else break;
                     }
-                    for (let i = 1; i < needed; i++) {
+                    
+                    // Count in negative direction
+                    for (let i = 1; i < 5; i++) {
                         let nr = r - dr * i, nc = c - dc * i;
                         if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && board[nr][nc] === player) {
                             count++;
                         } else break;
                     }
-                    if (count >= needed) return true;
+
+                    maxCount = Math.max(maxCount, count);
                 }
-                return false;
+
+                return maxCount;
             }
 
             checkWin(board, r, c, player) {
-                return this.checkLine(board, r, c, player, 5);
+                const dirs = [[0,1], [1,0], [1,1], [1,-1]];
+                
+                for (let [dr, dc] of dirs) {
+                    let count = 1;
+                    
+                    for (let i = 1; i < 5; i++) {
+                        let nr = r + dr * i, nc = c + dc * i;
+                        if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && board[nr][nc] === player) {
+                            count++;
+                        } else break;
+                    }
+                    
+                    for (let i = 1; i < 5; i++) {
+                        let nr = r - dr * i, nc = c - dc * i;
+                        if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && board[nr][nc] === player) {
+                            count++;
+                        } else break;
+                    }
+
+                    if (count >= 5) return true;
+                }
+
+                return false;
+            }
+
+            copyBoard(board) {
+                return board.map(row => [...row]);
             }
         }
 
