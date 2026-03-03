@@ -17,7 +17,6 @@
         html, body {
             width: 100%;
             height: 100%;
-            overflow: hidden;
         }
 
         body {
@@ -28,6 +27,7 @@
             align-items: center;
             padding: 10px;
             min-height: 100vh;
+            overflow: hidden;
         }
 
         .container {
@@ -36,53 +36,44 @@
             padding: 15px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 95vw;
-            max-height: 95vh;
+            height: 100%;
+            max-width: 700px;
+            max-height: 900px;
             display: flex;
             flex-direction: column;
+            gap: 10px;
         }
 
         h1 {
             text-align: center;
             color: #333;
-            margin-bottom: 10px;
-            font-size: clamp(1.5em, 5vw, 2.5em);
+            font-size: 1.8em;
+            flex-shrink: 0;
         }
 
         .controls {
             display: flex;
             justify-content: center;
             gap: 10px;
-            margin-bottom: 10px;
             flex-wrap: wrap;
+            flex-shrink: 0;
             width: 100%;
         }
 
         label {
-            font-size: clamp(0.9em, 3vw, 1em);
+            font-size: 1em;
+            align-self: center;
         }
 
         select, button {
             padding: 10px 12px;
-            font-size: clamp(0.85em, 2.5vw, 1em);
+            font-size: 1em;
             border: 2px solid #667eea;
             border-radius: 5px;
             cursor: pointer;
             background: white;
             color: #333;
-            flex-shrink: 0;
-            -webkit-appearance: none;
-            appearance: none;
             touch-action: manipulation;
-        }
-
-        select {
-            padding-right: 30px;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 8px center;
-            background-size: 20px;
-            padding-right: 35px;
         }
 
         button {
@@ -94,16 +85,15 @@
 
         button:active {
             background: #764ba2;
-            transform: scale(0.95);
         }
 
         .status {
             text-align: center;
-            font-size: clamp(0.95em, 3vw, 1.2em);
-            margin-bottom: 10px;
+            font-size: 1.1em;
             font-weight: bold;
             color: #667eea;
-            min-height: 1.5em;
+            flex-shrink: 0;
+            min-height: 30px;
         }
 
         .board-container {
@@ -113,44 +103,40 @@
             align-items: center;
             width: 100%;
             min-height: 0;
-            margin-bottom: 10px;
+            overflow: hidden;
         }
 
         .board {
             display: grid;
             grid-template-columns: repeat(15, 1fr);
+            grid-template-rows: repeat(15, 1fr);
             gap: 0;
             background: #DEB887;
-            padding: 8px;
+            padding: 10px;
             border-radius: 10px;
             aspect-ratio: 1;
             width: 100%;
-            max-width: 95vw;
-            max-height: calc(95vh - 200px);
+            height: 100%;
+            max-width: 500px;
+            max-height: 500px;
         }
 
         .cell {
-            aspect-ratio: 1;
             border: 1px solid #8B7355;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: clamp(12px, 4vw, 24px);
+            font-size: 20px;
             cursor: pointer;
             background: rgba(255, 255, 255, 0.3);
             transition: 0.1s;
-            -webkit-user-select: none;
-            user-select: none;
             touch-action: manipulation;
+            min-width: 0;
+            min-height: 0;
         }
 
         .cell:active {
             background: rgba(102, 126, 234, 0.4);
-            transform: scale(0.95);
-        }
-
-        .cell:hover {
-            background: rgba(102, 126, 234, 0.2);
         }
 
         .result {
@@ -159,7 +145,7 @@
             border-radius: 10px;
             text-align: center;
             display: none;
-            margin-top: 10px;
+            flex-shrink: 0;
             width: 100%;
         }
 
@@ -170,86 +156,31 @@
         .result h2 {
             color: #333;
             margin-bottom: 12px;
-            font-size: clamp(1.2em, 4vw, 1.8em);
+            font-size: 1.5em;
         }
 
         .result button {
-            padding: 12px 20px;
-            font-size: clamp(0.9em, 3vw, 1em);
+            padding: 10px 20px;
+            font-size: 1em;
         }
 
-        /* Landscape mode adjustments */
-        @media (orientation: landscape) {
+        @media (max-width: 600px) {
             .container {
                 padding: 10px;
-                max-height: 100vh;
             }
 
             h1 {
-                margin-bottom: 5px;
-                font-size: clamp(1.2em, 4vh, 1.8em);
-            }
-
-            .controls {
-                gap: 8px;
-                margin-bottom: 8px;
-            }
-
-            .status {
-                margin-bottom: 8px;
-                font-size: clamp(0.8em, 2.5vh, 1em);
-            }
-
-            .board {
-                padding: 6px;
-                max-height: calc(100vh - 150px);
-            }
-
-            .cell {
-                font-size: clamp(10px, 3.5vh, 20px);
-            }
-        }
-
-        /* Small screens (phones) */
-        @media (max-width: 480px) {
-            body {
-                padding: 5px;
-            }
-
-            .container {
-                padding: 10px;
-                border-radius: 10px;
-            }
-
-            h1 {
-                margin-bottom: 8px;
                 font-size: 1.4em;
             }
 
-            .controls {
-                gap: 8px;
-                margin-bottom: 8px;
-            }
-
-            select, button {
-                padding: 8px 10px;
-                font-size: 0.9em;
+            .cell {
+                font-size: 16px;
+                border: 0.5px solid #8B7355;
             }
 
             .board {
                 padding: 6px;
-                max-width: 100vw;
             }
-
-            .cell {
-                border: 0.5px solid #8B7355;
-                font-size: 16px;
-            }
-        }
-
-        /* Prevent zoom on double-tap */
-        input, button, select {
-            font-size: 16px;
         }
     </style>
 </head>
@@ -471,4 +402,83 @@
                 this.board = Array(15).fill(null).map(() => Array(15).fill(null));
                 this.ai = new AI('medium');
                 this.gameOver = false;
-                this.turn =
+                this.turn = 'player';
+                this.render();
+                this.attachListeners();
+            }
+
+            attachListeners() {
+                document.getElementById('newGameBtn').addEventListener('click', () => this.reset());
+                document.getElementById('difficulty').addEventListener('change', (e) => {
+                    this.ai.setDifficulty(e.target.value);
+                });
+            }
+
+            reset() {
+                this.board = Array(15).fill(null).map(() => Array(15).fill(null));
+                this.gameOver = false;
+                this.turn = 'player';
+                document.getElementById('result').classList.remove('show');
+                this.render();
+                this.updateStatus('Your Turn (Black●)');
+            }
+
+            render() {
+                const boardEl = document.getElementById('board');
+                boardEl.innerHTML = '';
+
+                for (let r = 0; r < 15; r++) {
+                    for (let c = 0; c < 15; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        
+                        if (this.board[r][c] === 'player') {
+                            cell.textContent = '●';
+                        } else if (this.board[r][c] === 'ai') {
+                            cell.textContent = '○';
+                        }
+
+                        cell.addEventListener('click', () => this.playerMove(r, c));
+                        boardEl.appendChild(cell);
+                    }
+                }
+            }
+
+            playerMove(r, c) {
+                if (this.gameOver || this.board[r][c] !== null || this.turn !== 'player') return;
+
+                this.board[r][c] = 'player';
+                this.render();
+
+                if (this.ai.checkWin(this.board, r, c, 'player')) {
+                    this.endGame('🎉 You Win!');
+                    return;
+                }
+
+                this.turn = 'ai';
+                this.updateStatus('AI is thinking...');
+                setTimeout(() => this.aiMove(), 600);
+            }
+
+            aiMove() {
+                const move = this.ai.getBestMove(this.board);
+                if (!move) {
+                    this.endGame('Draw!');
+                    return;
+                }
+
+                this.board[move.r][move.c] = 'ai';
+                this.render();
+
+                if (this.ai.checkWin(this.board, move.r, move.c, 'ai')) {
+                    this.endGame('💀 AI Wins!');
+                    return;
+                }
+
+                this.turn = 'player';
+                this.updateStatus('Your Turn (Black●)');
+            }
+
+            endGame(msg) {
+                this.gameOver = true;
+                document.getElementById('resultText').textContent = msg;
