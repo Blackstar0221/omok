@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Omok with AI</title>
+    <title>Omok Game</title>
     <style>
         * {
             margin: 0;
@@ -12,7 +12,7 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -26,7 +26,7 @@
             border-radius: 15px;
             padding: 30px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
+            max-width: 650px;
             width: 100%;
         }
 
@@ -34,69 +34,40 @@
             text-align: center;
             color: #333;
             margin-bottom: 20px;
-            font-size: 2.5em;
-        }
-
-        .game-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .info-box {
-            font-size: 1.1em;
-            color: #555;
-        }
-
-        .info-box p {
-            margin: 5px 0;
-        }
-
-        #playerStone {
-            font-size: 1.5em;
-            color: black;
-        }
-
-        #aiStone {
-            font-size: 1.5em;
-            color: gray;
         }
 
         .controls {
             display: flex;
-            gap: 10px;
-            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
-        .controls select {
-            padding: 8px 12px;
-            border-radius: 5px;
+        select, button {
+            padding: 10px 15px;
+            font-size: 16px;
             border: 2px solid #667eea;
-            font-size: 1em;
+            border-radius: 5px;
             cursor: pointer;
+            background: white;
+            color: #333;
         }
 
-        #newGameBtn {
-            padding: 10px 20px;
+        button {
             background: #667eea;
             color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
             font-weight: bold;
-            transition: 0.3s;
         }
 
-        #newGameBtn:hover {
+        button:hover {
             background: #764ba2;
         }
 
         .status {
             text-align: center;
-            font-size: 1.2em;
+            font-size: 18px;
+            margin-bottom: 20px;
             font-weight: bold;
             color: #667eea;
         }
@@ -109,7 +80,9 @@
             background: #DEB887;
             padding: 10px;
             border-radius: 10px;
-            aspect-ratio: 1;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .cell {
@@ -118,68 +91,31 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 1.5em;
+            font-size: 20px;
             cursor: pointer;
             user-select: none;
-            transition: 0.2s;
         }
 
         .cell:hover {
             background: rgba(102, 126, 234, 0.2);
         }
 
-        .cell.player {
-            color: black;
-            font-weight: bold;
-        }
-
-        .cell.ai {
-            color: gray;
-            font-weight: bold;
-        }
-
-        .game-result {
+        .result {
             background: #f0f0f0;
             padding: 20px;
             border-radius: 10px;
             text-align: center;
             display: none;
+            margin-top: 20px;
         }
 
-        #resultText {
-            font-size: 1.5em;
+        .result.show {
+            display: block;
+        }
+
+        .result h2 {
             color: #333;
             margin-bottom: 15px;
-            font-weight: bold;
-        }
-
-        .game-result button {
-            padding: 10px 20px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .game-result button:hover {
-            background: #764ba2;
-        }
-
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 1.8em;
-            }
-            
-            .game-info {
-                flex-direction: column;
-            }
-            
-            .controls {
-                width: 100%;
-                justify-content: center;
-            }
         }
     </style>
 </head>
@@ -187,6 +123,209 @@
     <div class="container">
         <h1>🎯 Omok with AI</h1>
         
-        <div class="game-info">
-            <div class="info-box">
-                <p>You: <span id="playerStone">●</span> (
+        <div class="controls">
+            <label for="difficulty">Difficulty:</label>
+            <select id="difficulty">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+            <button id="newGameBtn">New Game</button>
+        </div>
+
+        <div class="status">
+            <p id="gameStatus">Your Turn (Black●)</p>
+        </div>
+
+        <div class="board" id="board"></div>
+
+        <div class="result" id="result">
+            <h2 id="resultText"></h2>
+            <button onclick="location.reload()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        class AI {
+            constructor(difficulty = 'medium') {
+                this.difficulty = difficulty;
+            }
+
+            setDifficulty(difficulty) {
+                this.difficulty = difficulty;
+            }
+
+            getBestMove(board) {
+                const empty = [];
+                for (let r = 0; r < 15; r++) {
+                    for (let c = 0; c < 15; c++) {
+                        if (board[r][c] === null) empty.push({r, c});
+                    }
+                }
+
+                if (empty.length === 0) return null;
+
+                if (this.difficulty === 'easy') {
+                    return empty[Math.floor(Math.random() * empty.length)];
+                }
+
+                let best = null;
+                let bestScore = -999999;
+
+                for (let move of empty) {
+                    let score = this.evaluate(board, move.r, move.c);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        best = move;
+                    }
+                }
+
+                return best;
+            }
+
+            evaluate(board, r, c) {
+                let score = 0;
+                
+                if (this.checkLine(board, r, c, 'ai', 5)) return 10000;
+                
+                if (this.checkLine(board, r, c, 'player', 5)) score += 500;
+                
+                for (let dr = -2; dr <= 2; dr++) {
+                    for (let dc = -2; dc <= 2; dc++) {
+                        if (dr === 0 && dc === 0) continue;
+                        let nr = r + dr, nc = c + dc;
+                        if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15) {
+                            if (board[nr][nc] === 'ai') score += 10;
+                            if (board[nr][nc] === 'player') score += 5;
+                        }
+                    }
+                }
+
+                return score + Math.random() * 10;
+            }
+
+            checkLine(board, r, c, player, needed) {
+                const dirs = [[0,1], [1,0], [1,1], [1,-1]];
+                for (let [dr, dc] of dirs) {
+                    let count = 1;
+                    for (let i = 1; i < needed; i++) {
+                        let nr = r + dr * i, nc = c + dc * i;
+                        if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && board[nr][nc] === player) {
+                            count++;
+                        } else break;
+                    }
+                    for (let i = 1; i < needed; i++) {
+                        let nr = r - dr * i, nc = c - dc * i;
+                        if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && board[nr][nc] === player) {
+                            count++;
+                        } else break;
+                    }
+                    if (count >= needed) return true;
+                }
+                return false;
+            }
+
+            checkWin(board, r, c, player) {
+                return this.checkLine(board, r, c, player, 5);
+            }
+        }
+
+        class Game {
+            constructor() {
+                this.board = Array(15).fill(null).map(() => Array(15).fill(null));
+                this.ai = new AI('medium');
+                this.gameOver = false;
+                this.turn = 'player';
+                this.render();
+                this.attachListeners();
+            }
+
+            attachListeners() {
+                document.getElementById('newGameBtn').addEventListener('click', () => this.reset());
+                document.getElementById('difficulty').addEventListener('change', (e) => {
+                    this.ai.setDifficulty(e.target.value);
+                });
+            }
+
+            reset() {
+                this.board = Array(15).fill(null).map(() => Array(15).fill(null));
+                this.gameOver = false;
+                this.turn = 'player';
+                document.getElementById('result').classList.remove('show');
+                this.render();
+                this.updateStatus('Your Turn (Black●)');
+            }
+
+            render() {
+                const boardEl = document.getElementById('board');
+                boardEl.innerHTML = '';
+
+                for (let r = 0; r < 15; r++) {
+                    for (let c = 0; c < 15; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        
+                        if (this.board[r][c] === 'player') {
+                            cell.textContent = '●';
+                        } else if (this.board[r][c] === 'ai') {
+                            cell.textContent = '○';
+                        }
+
+                        cell.addEventListener('click', () => this.playerMove(r, c));
+                        boardEl.appendChild(cell);
+                    }
+                }
+            }
+
+            playerMove(r, c) {
+                if (this.gameOver || this.board[r][c] !== null || this.turn !== 'player') return;
+
+                this.board[r][c] = 'player';
+                this.render();
+
+                if (this.ai.checkWin(this.board, r, c, 'player')) {
+                    this.endGame('🎉 You Win!');
+                    return;
+                }
+
+                this.turn = 'ai';
+                this.updateStatus('AI is thinking...');
+                setTimeout(() => this.aiMove(), 500);
+            }
+
+            aiMove() {
+                const move = this.ai.getBestMove(this.board);
+                if (!move) {
+                    this.endGame('Draw!');
+                    return;
+                }
+
+                this.board[move.r][move.c] = 'ai';
+                this.render();
+
+                if (this.ai.checkWin(this.board, move.r, move.c, 'ai')) {
+                    this.endGame('💀 AI Wins!');
+                    return;
+                }
+
+                this.turn = 'player';
+                this.updateStatus('Your Turn (Black●)');
+            }
+
+            endGame(msg) {
+                this.gameOver = true;
+                document.getElementById('resultText').textContent = msg;
+                document.getElementById('result').classList.add('show');
+            }
+
+            updateStatus(msg) {
+                document.getElementById('gameStatus').textContent = msg;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new Game();
+        });
+    </script>
+</body>
+</html>
