@@ -99,6 +99,4 @@ class OmokGame {
         resultElement.style.display = 'block';
     }
 
-    resetGame() {
-        this.board = this.initBoard();
-        this.gameOver = false;
+    resetGame
